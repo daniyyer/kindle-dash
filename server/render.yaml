@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: kindle-dash-server
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: QWEATHER_API_KEY
+        sync: false
+      - key: LOCATION
+        value: "116.41,39.92"
+      - key: NEWS_RSS_DOMESTIC
+        value: "https://rsshub.app/thepaper/newsDetail/25"
+      - key: NEWS_RSS_INTERNATIONAL
+        value: "https://rsshub.app/bbc/world"

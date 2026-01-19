@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=800, height=600">
+    <title>Kindle Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            width: 800px;
+            height: 600px;
+            font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: #fff;
+            color: #000;
+            overflow: hidden;
+        }
+        
+        .container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* 顶部日期栏 */
+        .header {
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #000;
+        }
+        
+        .date {
+            font-size: 22px;
+            font-weight: bold;
+        }
+        
+        .update-time {
+            font-size: 14px;
+            color: #333;
+        }
+        
+        /* 主内容区 */
+        .main {
+            flex: 1;
+            display: flex;
+        }
+        
+        /* 左侧天气栏 */
+        .weather-panel {
+            width: 280px;
+            padding: 15px 20px;
+            border-right: 2px solid #000;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .current-weather {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        
+        .weather-main {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .weather-icon {
+            font-size: 36px;
+        }
+        
+        .weather-text {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .temperature {
+            font-size: 48px;
+            font-weight: bold;
+        }
+        
+        .weather-details {
+            font-size: 15px;
+            margin-top: 8px;
+            line-height: 1.6;
+            text-align: center;
+        }
+        
+        .weather-details div {
+            margin: 4px 0;
+        }
+        
+        .divider {
+            border-top: 1px solid #666;
+            margin: 12px 0;
+        }
+        
+        .rain-forecast {
+            font-size: 14px;
+            text-align: center;
+            padding: 10px;
+            background: #e8e8e8;
+            border-radius: 4px;
+        }
+        
+        /* 三日预报 */
+        .daily-forecast {
+            margin-top: auto;
+        }
+        
+        .daily-forecast h3 {
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        
+        .forecast-row {
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .forecast-day {
+            text-align: center;
+            flex: 1;
+        }
+        
+        .forecast-date {
+            font-size: 13px;
+            color: #333;
+        }
+        
+        .forecast-icon {
+            font-size: 18px;
+            margin: 5px 0;
+        }
+        
+        .forecast-temp {
+            font-size: 13px;
+            font-weight: bold;
+        }
+        
+        /* 右侧新闻栏 */
+        .news-panel {
+            flex: 1;
+            padding: 15px 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .news-section {
+            margin-bottom: 15px;
+        }
+        
+        .news-section:last-child {
+            margin-bottom: 0;
+        }
+        
+        .news-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #999;
+        }
+        
+        .news-list {
+            list-style: none;
+        }
+        
+        .news-item {
+            font-size: 14px;
+            line-height: 1.5;
+            padding: 6px 0;
+            border-bottom: 1px dotted #ccc;
+        }
+        
+        .news-item:last-child {
+            border-bottom: none;
+        }
+        
+        .news-item::before {
+            content: "· ";
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 顶部日期栏 -->
+        <div class="header">
+            <div class="date">{{ date_str }}</div>
+            <div class="update-time">{{ update_time }} 更新</div>
+        </div>
+        
+        <div class="main">
+            <!-- 左侧天气栏 -->
+            <div class="weather-panel">
+                <div class="current-weather">
+                    <div class="weather-main">
+                        <span class="weather-icon">{{ weather_emoji }}</span>
+                        <span class="weather-text">{{ weather.current.text }}</span>
+                        <span class="temperature">{{ weather.current.temp }}°</span>
+                    </div>
+                    <div class="weather-details">
+                        <div>体感 {{ weather.current.feels_like }}°C</div>
+                        <div>{{ weather.current.wind_dir }} {{ weather.current.wind_scale }}级 | AQI {{ weather.air.aqi if weather.air else 'N/A' }} {{ weather.air.category if weather.air else '' }}</div>
+                    </div>
+                </div>
+                
+                <div class="divider"></div>
+                
+                <div class="rain-forecast">
+                    {{ weather.minutely.summary if weather.minutely else '降水信息暂无' }}
+                </div>
+                
+                <div class="divider"></div>
+                
+                <div class="daily-forecast">
+                    <h3>未来三天</h3>
+                    <div class="forecast-row">
+                        {% for day in weather.daily[:3] %}
+                        <div class="forecast-day">
+                            <div class="forecast-date">{{ day.date }}</div>
+                            <div class="forecast-icon">{{ day.text_day }}</div>
+                            <div class="forecast-temp">{{ day.temp_min }}-{{ day.temp_max }}°</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 右侧新闻栏 -->
+            <div class="news-panel">
+                <div class="news-section">
+                    <div class="news-title">【国内新闻】</div>
+                    <ul class="news-list">
+                        {% for item in news.domestic %}
+                        <li class="news-item">{{ item.title }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                
+                <div class="news-section">
+                    <div class="news-title">【国际新闻】</div>
+                    <ul class="news-list">
+                        {% for item in news.international %}
+                        <li class="news-item">{{ item.title }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
