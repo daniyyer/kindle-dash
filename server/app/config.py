@@ -3,12 +3,18 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# 和风天气 API 配置
-QWEATHER_API_KEY = os.getenv("QWEATHER_API_KEY", "")
-QWEATHER_BASE_URL = "https://devapi.qweather.com/v7"
+# QWeather API configuration
+QWEATHER_API_KEY = os.getenv("QWEATHER_API_KEY", "")  # Legacy, kept for compatibility
+QWEATHER_API_HOST = os.getenv("QWEATHER_API_HOST", "devapi.qweather.com")
+QWEATHER_BASE_URL = f"https://{QWEATHER_API_HOST}/v7"
 
-# 位置配置 (经度,纬度 或 城市ID)
-LOCATION = os.getenv("LOCATION", "116.41,39.92")  # 默认北京
+# QWeather JWT authentication (recommended)
+QWEATHER_PROJECT_ID = os.getenv("QWEATHER_PROJECT_ID", "")
+QWEATHER_KEY_ID = os.getenv("QWEATHER_KEY_ID", "")
+QWEATHER_PRIVATE_KEY = os.getenv("QWEATHER_PRIVATE_KEY", "")
+
+# Location (longitude,latitude or city ID)
+LOCATION = os.getenv("LOCATION", "116.41,39.92")  # Default: Beijing
 
 # 新闻 RSS 配置
 NEWS_RSS_DOMESTIC = os.getenv(

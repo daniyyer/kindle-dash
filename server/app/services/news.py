@@ -1,10 +1,12 @@
 """
-新闻 RSS 服务
+News RSS Service
 
-从 RSS 源获取国内和国际新闻标题
+Fetch domestic and international news titles from RSS feeds
 """
 
+import httpx
 import feedparser
+from io import BytesIO
 from dataclasses import dataclass
 from app.config import (
     NEWS_RSS_DOMESTIC,
@@ -36,9 +38,13 @@ def truncate_title(title: str, max_length: int = 28) -> str:
 
 
 def fetch_rss_news(url: str, count: int) -> list[NewsItem]:
-    """从 RSS 源获取新闻"""
+    """Fetch news from RSS feed with timeout"""
     try:
-        feed = feedparser.parse(url)
+        # Use httpx with timeout to fetch RSS content
+        with httpx.Client(timeout=5.0) as client:
+            resp = client.get(url)
+            feed = feedparser.parse(BytesIO(resp.content))
+        
         news_list = []
         
         for entry in feed.entries[:count]:

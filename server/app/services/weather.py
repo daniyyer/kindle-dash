@@ -1,17 +1,60 @@
 """
-和风天气 API 服务
+QWeather API Service
 
-提供以下功能:
-- 实时天气（温度、天气状况、体感温度、风力风向）
-- 空气质量（AQI指数、等级）
-- 分钟级降水预报（未来2小时）
-- 逐日天气预报（未来3天）
+Features:
+- Real-time weather (temperature, conditions, feels-like, wind)
+- Air quality (AQI index, category)
+- Minutely precipitation forecast (next 2 hours)
+- Daily forecast (next 3 days)
 """
 
+import time
 import httpx
+import jwt
 from typing import Optional
 from dataclasses import dataclass
-from app.config import QWEATHER_API_KEY, QWEATHER_BASE_URL, LOCATION
+from app.config import (
+    QWEATHER_BASE_URL,
+    QWEATHER_PROJECT_ID,
+    QWEATHER_KEY_ID,
+    QWEATHER_PRIVATE_KEY,
+    LOCATION
+)
+
+
+def generate_jwt_token() -> str:
+    """
+    Generate a JWT token for QWeather API authentication.
+    Uses EdDSA (Ed25519) algorithm as required by QWeather.
+    """
+    now = int(time.time())
+    
+    # Prepare private key (handle newlines in env var)
+    private_key = QWEATHER_PRIVATE_KEY.replace("\\n", "\n")
+    
+    payload = {
+        "sub": QWEATHER_PROJECT_ID,
+        "iat": now - 30,  # 30 seconds in the past to handle clock skew
+        "exp": now + 900   # Valid for 15 minutes
+    }
+    
+    headers = {
+        "kid": QWEATHER_KEY_ID
+    }
+    
+    token = jwt.encode(
+        payload,
+        private_key,
+        algorithm="EdDSA",
+        headers=headers
+    )
+    return token
+
+
+def get_auth_headers() -> dict:
+    """Get authorization headers for API requests."""
+    token = generate_jwt_token()
+    return {"Authorization": f"Bearer {token}"}
 
 
 @dataclass
@@ -58,43 +101,33 @@ class WeatherData:
 
 
 async def fetch_current_weather(location: str = LOCATION) -> CurrentWeather:
-    """获取实时天气"""
-    urls = [
-        f"https://devapi.qweather.com/v7/weather/now",
-        f"https://api.qweather.com/v7/weather/now"
-    ]
+    """Fetch current weather"""
+    url = f"{QWEATHER_BASE_URL}/weather/now"
     
-    last_error = None
     async with httpx.AsyncClient(follow_redirects=True) as client:
-        for url in urls:
-            try:
-                resp = await client.get(
-                    url,
-                    params={"key": QWEATHER_API_KEY, "location": location},
-                    timeout=10.0
+        try:
+            resp = await client.get(
+                url,
+                headers=get_auth_headers(),
+                params={"location": location},
+                timeout=10.0
+            )
+            data = resp.json()
+            
+            if data.get("code") == "200":
+                now = data["now"]
+                return CurrentWeather(
+                    temp=now["temp"],
+                    feels_like=now["feelsLike"],
+                    text=now["text"],
+                    icon=now["icon"],
+                    wind_dir=now["windDir"],
+                    wind_scale=now["windScale"]
                 )
-                data = resp.json()
-                
-                if data.get("code") == "200":
-                    now = data["now"]
-                    return CurrentWeather(
-                        temp=now["temp"],
-                        feels_like=now["feelsLike"],
-                        text=now["text"],
-                        icon=now["icon"],
-                        wind_dir=now["windDir"],
-                        wind_scale=now["windScale"]
-                    )
-                elif data.get("code") in ["401", "403"]:
-                    last_error = f"API Key error or Invalid Host ({data.get('code')})"
-                    continue # 尝试下一个域名
-                else:
-                    raise Exception(f"Weather API error: {data.get('code')}")
-            except Exception as e:
-                last_error = str(e)
-                continue
-                
-    raise Exception(f"Failed to fetch weather: {last_error}")
+            else:
+                raise Exception(f"Weather API error: {data.get('code')} - {data.get('error', {}).get('detail', 'Unknown')}")
+        except Exception as e:
+            raise Exception(f"Failed to fetch weather: {e}")
 
 
 async def fetch_air_quality(location: str = LOCATION) -> Optional[AirQuality]:
@@ -102,7 +135,8 @@ async def fetch_air_quality(location: str = LOCATION) -> Optional[AirQuality]:
     async with httpx.AsyncClient() as client:
         resp = await client.get(
             f"{QWEATHER_BASE_URL}/air/now",
-            params={"key": QWEATHER_API_KEY, "location": location}
+            headers=get_auth_headers(),
+            params={"location": location}
         )
         data = resp.json()
         
@@ -121,7 +155,8 @@ async def fetch_minutely_rain(location: str = LOCATION) -> Optional[MinutelyRain
     async with httpx.AsyncClient() as client:
         resp = await client.get(
             f"{QWEATHER_BASE_URL}/minutely/5m",
-            params={"key": QWEATHER_API_KEY, "location": location}
+            headers=get_auth_headers(),
+            params={"location": location}
         )
         data = resp.json()
         
@@ -137,7 +172,8 @@ async def fetch_daily_forecast(location: str = LOCATION, days: int = 3) -> list[
     async with httpx.AsyncClient() as client:
         resp = await client.get(
             f"{QWEATHER_BASE_URL}/weather/{days}d",
-            params={"key": QWEATHER_API_KEY, "location": location}
+            headers=get_auth_headers(),
+            params={"location": location}
         )
         data = resp.json()
         
