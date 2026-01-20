@@ -4,10 +4,18 @@
         {
             "label": "kill-port-8000",
             "type": "shell",
-            "command": "lsof -t -i :8000 | xargs kill -9 || true",
             "presentation": {
                 "reveal": "silent",
                 "panel": "shared"
+            },
+            "windows": {
+                "command": "Get-NetTCPConnection -LocalPort 8000 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }; exit 0"
+            },
+            "linux": {
+                "command": "lsof -t -i :8000 | xargs kill -9 2>/dev/null; exit 0"
+            },
+            "osx": {
+                "command": "lsof -t -i :8000 | xargs kill -9 2>/dev/null; exit 0"
             }
         }
     ]
