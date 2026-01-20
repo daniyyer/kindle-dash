@@ -1,0 +1,14 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "kill-port-8000",
+            "type": "shell",
+            "command": "lsof -t -i :8000 | xargs kill -9 || true",
+            "presentation": {
+                "reveal": "silent",
+                "panel": "shared"
+            }
+        }
+    ]
+}

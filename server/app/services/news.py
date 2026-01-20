@@ -39,9 +39,12 @@ def truncate_title(title: str, max_length: int = 28) -> str:
 
 def fetch_rss_news(url: str, count: int) -> list[NewsItem]:
     """Fetch news from RSS feed with timeout"""
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    }
     try:
         # Use httpx with timeout to fetch RSS content
-        with httpx.Client(timeout=5.0) as client:
+        with httpx.Client(timeout=10.0, follow_redirects=True, headers=headers) as client:
             resp = client.get(url)
             feed = feedparser.parse(BytesIO(resp.content))
         

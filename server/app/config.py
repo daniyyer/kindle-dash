@@ -14,16 +14,17 @@ QWEATHER_KEY_ID = os.getenv("QWEATHER_KEY_ID", "")
 QWEATHER_PRIVATE_KEY = os.getenv("QWEATHER_PRIVATE_KEY", "")
 
 # Location (longitude,latitude or city ID)
-LOCATION = os.getenv("LOCATION", "116.41,39.92")  # Default: Beijing
+LOCATION = os.getenv("LOCATION", "121.1462,31.4622")  # Taicang First People's Hospital
+LOCATION_NAME = os.getenv("LOCATION_NAME", "太仓")
 
 # 新闻 RSS 配置
 NEWS_RSS_DOMESTIC = os.getenv(
     "NEWS_RSS_DOMESTIC",
-    "https://rsshub.app/thepaper/newsDetail/25"  # 澎湃新闻-时事
+    "https://www.chinanews.com.cn/rss/importnews.xml"
 )
 NEWS_RSS_INTERNATIONAL = os.getenv(
     "NEWS_RSS_INTERNATIONAL",
-    "https://rsshub.app/bbc/world"  # BBC 国际新闻
+    "https://feeds.bbci.co.uk/news/world/rss.xml"
 )
 
 # 新闻条数
