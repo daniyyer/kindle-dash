@@ -5,7 +5,6 @@
             "name": "Python: FastAPI (Hot Reload)",
             "type": "debugpy",
             "request": "launch",
-            "python": "${workspaceFolder}/.venv/bin/python",
             "module": "uvicorn",
             "cwd": "${workspaceFolder}/server",
             "preLaunchTask": "kill-port-8000",
@@ -23,18 +22,9 @@
             ],
             "jinja": true,
             "justMyCode": true,
-            "env": {
-                "PYTHONPATH": "."
-            },
-            "windows": {
-                "python": "${workspaceFolder}/.venv/Scripts/python.exe"
-            },
-            "linux": {
-                "python": "${workspaceFolder}/.venv/bin/python"
-            },
-            "osx": {
-                "python": "${workspaceFolder}/.venv/bin/python"
-            }
+            // "env": {
+            //     "PYTHONPATH": "."
+            // }
         }
     ]
 }

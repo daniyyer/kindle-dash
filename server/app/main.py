@@ -4,10 +4,14 @@ Kindle Dashboard Server
 FastAPI 主入口，提供仪表盘图片生成服务
 """
 
+import logging
+
 from fastapi import FastAPI, Response
 from fastapi.responses import JSONResponse
 
 from app.services.weather import get_weather_data
+
+logger = logging.getLogger(__name__)
 from app.services.news import get_news_data
 from app.renderer.template import render_dashboard_html
 from app.renderer.screenshot import html_to_grayscale_png
@@ -79,6 +83,7 @@ async def preview_dashboard():
             media_type="text/html"
         )
     except Exception as e:
+        logger.exception("Preview endpoint error")
         return JSONResponse(
             status_code=500,
             content={"error": str(e)}

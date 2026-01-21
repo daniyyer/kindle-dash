@@ -1,3 +1,19 @@
 /dist
 /kindle-dash-*.tgz
 /tmp
+
+# IDE
+.idea/
+*.iml
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+*.egg-info/
+.eggs/
+
+# Environment
+.env
+.env.local

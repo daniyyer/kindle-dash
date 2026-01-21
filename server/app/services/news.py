@@ -71,7 +71,7 @@ def get_news_data() -> NewsData:
     # 1. 国内新闻
     domestic = fetch_rss_news(NEWS_RSS_DOMESTIC, NEWS_COUNT_DOMESTIC)
     
-    # 2. 国际新闻 (分分类并行/循环获取)
+    # 2. 国际新闻 (分分类循环获取)
     international = []
     for category_name, url in NEWS_RSS_INTERNATIONAL.items():
         items = fetch_rss_news(url, NEWS_COUNT_PER_CATEGORY, prefix=category_name)
