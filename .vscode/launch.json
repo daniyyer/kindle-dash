@@ -5,6 +5,7 @@
             "name": "Python: FastAPI (Hot Reload)",
             "type": "debugpy",
             "request": "launch",
+            "python": "${workspaceFolder}/.venv/bin/python",
             "module": "uvicorn",
             "cwd": "${workspaceFolder}/server",
             "preLaunchTask": "kill-port-8000",

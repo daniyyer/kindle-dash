@@ -12,7 +12,7 @@ from app.config import (
     NEWS_RSS_DOMESTIC,
     NEWS_RSS_INTERNATIONAL,
     NEWS_COUNT_DOMESTIC,
-    NEWS_COUNT_INTERNATIONAL
+    NEWS_COUNT_PER_CATEGORY
 )
 
 
@@ -30,14 +30,8 @@ class NewsData:
     international: list[NewsItem] # 国际新闻
 
 
-def truncate_title(title: str, max_length: int = 28) -> str:
-    """截断标题，适应 Kindle 显示"""
-    if len(title) <= max_length:
-        return title
-    return title[:max_length - 1] + "…"
 
-
-def fetch_rss_news(url: str, count: int) -> list[NewsItem]:
+def fetch_rss_news(url: str, count: int, prefix: str = "") -> list[NewsItem]:
     """Fetch news from RSS feed with timeout"""
     headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -52,11 +46,17 @@ def fetch_rss_news(url: str, count: int) -> list[NewsItem]:
         
         for entry in feed.entries[:count]:
             title = entry.get("title", "").strip()
+            
+            # 移除 Google 新闻标题末尾的来源 (例如: - Reuters)
+            if " - " in title:
+                title = title.rsplit(" - ", 1)[0]
+                
             link = entry.get("link", "")
             
             if title:
+                display_title = f"[{prefix}] {title}" if prefix else title
                 news_list.append(NewsItem(
-                    title=truncate_title(title),
+                    title=display_title,
                     link=link
                 ))
         
@@ -68,8 +68,14 @@ def fetch_rss_news(url: str, count: int) -> list[NewsItem]:
 
 def get_news_data() -> NewsData:
     """获取所有新闻数据"""
+    # 1. 国内新闻
     domestic = fetch_rss_news(NEWS_RSS_DOMESTIC, NEWS_COUNT_DOMESTIC)
-    international = fetch_rss_news(NEWS_RSS_INTERNATIONAL, NEWS_COUNT_INTERNATIONAL)
+    
+    # 2. 国际新闻 (分分类并行/循环获取)
+    international = []
+    for category_name, url in NEWS_RSS_INTERNATIONAL.items():
+        items = fetch_rss_news(url, NEWS_COUNT_PER_CATEGORY, prefix=category_name)
+        international.extend(items)
     
     # 如果获取失败，提供默认内容
     if not domestic:
