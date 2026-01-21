@@ -10,10 +10,12 @@ Features:
 
 import time
 from datetime import datetime, timedelta
-import httpx
-import jwt
 from typing import Optional
 from dataclasses import dataclass
+
+import httpx
+import jwt
+
 from app.config import (
     QWEATHER_BASE_URL,
     QWEATHER_PROJECT_ID,
@@ -30,20 +32,20 @@ def generate_jwt_token() -> str:
     Uses EdDSA (Ed25519) algorithm as required by QWeather.
     """
     now = int(time.time())
-    
+
     # Prepare private key (handle newlines in env var)
     private_key = QWEATHER_PRIVATE_KEY.replace("\\n", "\n")
-    
+
     payload = {
         "sub": QWEATHER_PROJECT_ID,
         "iat": now - 30,  # 30 seconds in the past to handle clock skew
         "exp": now + 900   # Valid for 15 minutes
     }
-    
+
     headers = {
         "kid": QWEATHER_KEY_ID
     }
-    
+
     token = jwt.encode(
         payload,
         private_key,
@@ -108,7 +110,7 @@ async def fetch_current_weather(location: str = LOCATION) -> CurrentWeather:
     """Fetch current grid weather (格点天气)"""
     # 使用格点天气 API 路径
     url = f"{QWEATHER_BASE_URL}/grid-weather/now"
-    
+
     async with httpx.AsyncClient(follow_redirects=True) as client:
         try:
             resp = await client.get(
@@ -118,11 +120,7 @@ async def fetch_current_weather(location: str = LOCATION) -> CurrentWeather:
                 timeout=10.0
             )
             data = resp.json()
-            # print(f"DEBUG: QWeather response: {data}")  # 清理旧日志
-            
-            
-            
-            # 如果格格点天气返回 403 或 404 (表示订阅不支持或该地区无数据)，则回退到普通实时天气
+            # 如果格点天气返回 403 或 404，则回退到普通实时天气
             if data.get("code") in ["403", "404"]:
                 url = f"{QWEATHER_BASE_URL}/weather/now"
                 resp = await client.get(
@@ -135,7 +133,7 @@ async def fetch_current_weather(location: str = LOCATION) -> CurrentWeather:
 
             if data.get("code") == "200":
                 now = data["now"]
-                
+
                 # 提取时间并转为北京时间 (处理 2024-01-20T02:00+00:00 格式)
                 obs_time_raw = now.get("obsTime", "")
                 obs_time = "未知"
@@ -147,9 +145,10 @@ async def fetch_current_weather(location: str = LOCATION) -> CurrentWeather:
                         # 转为北京时间 (+8h)
                         dt_beijing = dt_utc + timedelta(hours=8)
                         obs_time = dt_beijing.strftime("%H:%M")
-                    except Exception:
+                    except (ValueError, TypeError, IndexError):
+                        # 处理时间解析失败的多种可能
                         obs_time = obs_time_raw[11:16] if len(obs_time_raw) >= 16 else "未知"
-                
+
                 return CurrentWeather(
                     temp=now["temp"],
                     feels_like=now["feelsLike"],
@@ -160,10 +159,15 @@ async def fetch_current_weather(location: str = LOCATION) -> CurrentWeather:
                     obs_time=obs_time
                 )
             else:
-                detail = data.get("error", {}).get("detail", "Unknown")
-                raise Exception(f"Weather API error: {data.get('code')} - {detail}")
-        except Exception as e:
-            raise Exception(f"Failed to fetch weather: {e}")
+                return CurrentWeather(
+                    temp="N/A", feels_like="N/A", text="Error", icon="999",
+                    wind_dir="", wind_scale="", obs_time="N/A"
+                )
+        except (httpx.HTTPError, KeyError, ValueError, TypeError):
+            return CurrentWeather(
+                temp="N/A", feels_like="N/A", text="Error", icon="999",
+                wind_dir="", wind_scale="", obs_time="N/A"
+            )
 
 
 async def fetch_air_quality(location: str = LOCATION) -> Optional[AirQuality]:
@@ -173,26 +177,25 @@ async def fetch_air_quality(location: str = LOCATION) -> Optional[AirQuality]:
         lon, lat = location.split(',')
         lat = f"{float(lat):.2f}"
         lon = f"{float(lon):.2f}"
-    except Exception:
-        # 如果不是坐标格式，回退到老接口尝试 (尽管在此环境下可能依然 403)
+    except (ValueError, AttributeError, IndexError):
+        # 如果不是坐标格式，回退到老接口尝试
         return await _fetch_air_quality_v7(location)
 
     async with httpx.AsyncClient() as client:
         # 注意: 此接口路径不含 /v7
-        api_host = QWEATHER_BASE_URL.split('/v7')[0]
+        api_host = QWEATHER_BASE_URL.split('/v7', maxsplit=1)[0]
         url = f"{api_host}/airquality/v1/current/{lat}/{lon}"
-        
+
         resp = await client.get(url, headers=get_auth_headers())
         data = resp.json()
-        
+
         if resp.status_code != 200:
-            print(f"DEBUG: High-res Air Quality API failed ({resp.status_code}): {data}")
             return None
-            
+
         # 寻找中国标准 (cn-mee)
         indexes = data.get("indexes", [])
         cn_index = next((i for i in indexes if i.get("code") == "cn-mee"), None)
-        
+
         if not cn_index:
             # 如果没找到，取第一个
             cn_index = indexes[0] if indexes else {}
@@ -205,59 +208,71 @@ async def fetch_air_quality(location: str = LOCATION) -> Optional[AirQuality]:
 
 async def _fetch_air_quality_v7(location: str) -> Optional[AirQuality]:
     """老版本 v7 接口，作为回退或兼容逻辑"""
-    async with httpx.AsyncClient() as client:
-        resp = await client.get(
-            f"{QWEATHER_BASE_URL}/air/now",
-            headers=get_auth_headers(),
-            params={"location": location}
-        )
-        data = resp.json()
-        if data.get("code") == "200":
-            now = data.get("now", {})
-            return AirQuality(aqi=now.get("aqi", "N/A"), category=now.get("category", ""))
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(
+                f"{QWEATHER_BASE_URL}/air/now",
+                headers=get_auth_headers(),
+                params={"location": location},
+                timeout=5.0
+            )
+            data = resp.json()
+            if data.get("code") == "200":
+                now = data.get("now", {})
+                return AirQuality(aqi=now.get("aqi", "N/A"), category=now.get("category", ""))
+    except (httpx.HTTPError, ValueError, KeyError):
+        return None
     return None
 
 
 async def fetch_minutely_rain(location: str = LOCATION) -> Optional[MinutelyRain]:
     """获取分钟级降水预报"""
-    async with httpx.AsyncClient() as client:
-        resp = await client.get(
-            f"{QWEATHER_BASE_URL}/minutely/5m",
-            headers=get_auth_headers(),
-            params={"location": location}
-        )
-        data = resp.json()
-        
-        if data.get("code") != "200":
-            return None
-        
-        summary = data.get("summary", "未来2小时天气情况未知")
-        return MinutelyRain(summary=summary)
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(
+                f"{QWEATHER_BASE_URL}/minutely/5m",
+                headers=get_auth_headers(),
+                params={"location": location},
+                timeout=5.0
+            )
+            data = resp.json()
+
+            if data.get("code") != "200":
+                return None
+
+            summary = data.get("summary", "未来2小时天气情况未知")
+            return MinutelyRain(summary=summary)
+    except (httpx.HTTPError, ValueError, KeyError):
+        return None
 
 
 async def fetch_daily_forecast(location: str = LOCATION, days: int = 3) -> list[DailyForecast]:
     """获取逐日天气预报"""
-    async with httpx.AsyncClient() as client:
-        resp = await client.get(
-            f"{QWEATHER_BASE_URL}/weather/{days}d",
-            headers=get_auth_headers(),
-            params={"location": location}
-        )
-        data = resp.json()
-        
-        if data.get("code") != "200":
-            return []
-        
-        forecasts = []
-        for day in data.get("daily", []):
-            forecasts.append(DailyForecast(
-                date=day["fxDate"][5:],  # 只取月-日
-                text_day=day["textDay"],
-                icon_day=day["iconDay"],
-                temp_min=day["tempMin"],
-                temp_max=day["tempMax"]
-            ))
-        return forecasts
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(
+                f"{QWEATHER_BASE_URL}/weather/{days}d",
+                headers=get_auth_headers(),
+                params={"location": location},
+                timeout=5.0
+            )
+            data = resp.json()
+
+            if data.get("code") != "200":
+                return []
+
+            forecasts = []
+            for day in data.get("daily", []):
+                forecasts.append(DailyForecast(
+                    date=day["fxDate"][5:],  # 只取月-日
+                    text_day=day["textDay"],
+                    icon_day=day["iconDay"],
+                    temp_min=day["tempMin"],
+                    temp_max=day["tempMax"]
+                ))
+            return forecasts
+    except (httpx.HTTPError, ValueError, KeyError):
+        return []
 
 
 async def get_weather_data(location: str = LOCATION) -> WeatherData:
@@ -266,14 +281,10 @@ async def get_weather_data(location: str = LOCATION) -> WeatherData:
     air = await fetch_air_quality(location)
     minutely = await fetch_minutely_rain(location)
     daily = await fetch_daily_forecast(location)
-    
+
     # 获取地理位置名称，优先使用配置中的名称
-    location_name = LOCATION_NAME
-
-
-    
     return WeatherData(
-        location_name=location_name,
+        location_name=LOCATION_NAME,
         current=current,
         air=air,
         minutely=minutely,
