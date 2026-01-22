@@ -57,15 +57,17 @@
         /* 左侧天气栏 */
         .weather-panel {
             width: 280px;
-            padding: 15px 20px;
+            padding: 12px 15px;
             border-right: 2px solid #000;
             display: flex;
             flex-direction: column;
+            overflow: hidden;
+            /* 严格防止溢出 */
         }
 
         .current-weather {
             text-align: center;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
         }
 
         .weather-main {
@@ -73,7 +75,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            margin: 5px 0;
+            margin: 2px 0;
         }
 
         .weather-icon-large {
@@ -105,25 +107,25 @@
 
         .divider {
             border-top: 1px solid #666;
-            margin: 8px 0;
+            margin: 5px 0;
         }
 
         .rain-forecast {
             font-size: 13px;
             text-align: center;
-            padding: 8px;
+            padding: 5px;
             background: #f0f0f0;
             border-radius: 4px;
         }
 
         /* 三日预报 */
         .daily-forecast {
-            margin-top: auto;
+            margin-top: 5px;
         }
 
         .daily-forecast h3 {
             font-size: 13px;
-            margin-bottom: 8px;
+            margin-bottom: 5px;
             color: #333;
             text-align: center;
         }
@@ -159,6 +161,7 @@
         .forecast-temp {
             font-size: 13px;
             font-weight: bold;
+            white-space: nowrap;
         }
 
         /* 右侧新闻栏 */
@@ -191,9 +194,11 @@
 
         .news-item {
             font-size: 14px;
-            line-height: 1.5;
-            padding: 6px 0;
+            line-height: 1.4;
+            padding: 5px 0;
             border-bottom: 1px dotted #ccc;
+            word-break: break-all;
+            /* 允许右侧标题换行 */
         }
 
         .news-item:last-child {
@@ -219,8 +224,6 @@
             <!-- 左侧天气栏 -->
             <div class="weather-panel">
                 <div class="current-weather">
-                    <div style="font-size: 20px; font-weight: bold; margin-bottom: 5px;">{{ weather.location_name }}
-                    </div>
                     <div class="weather-main">
                         <i class="qi-{{ weather.current.icon }} weather-icon-large"></i>
                         <span class="weather-text">{{ weather.current.text }}</span>
@@ -242,11 +245,11 @@
 
                 <div class="divider"></div>
 
-                <div style="font-size: 11px; color: #666; margin-bottom: 10px; text-align: center;">数据观测时间: {{
-                    weather.current.obs_time }}</div>
+                <div style="font-size: 12px; color: #888; margin-bottom: 5px; text-align: center; font-weight: bold;">
+                    {{ weather.location_name }} · {{ weather.current.obs_time }} 观测 · 未来三天
+                </div>
 
                 <div class="daily-forecast">
-                    <h3>未来三天</h3>
                     <div class="forecast-row">
                         {% for day in weather.daily[:3] %}
                         <div class="forecast-day">
