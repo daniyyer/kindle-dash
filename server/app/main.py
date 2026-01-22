@@ -5,9 +5,12 @@ FastAPI 主入口，提供仪表盘图片生成服务
 """
 
 import logging
+import os
+from pathlib import Path
 
 from fastapi import FastAPI, Response
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.services.weather import get_weather_data
 
@@ -22,6 +25,13 @@ app = FastAPI(
     description="为 Kindle 设备生成天气和新闻仪表盘图片",
     version="1.0.0"
 )
+
+# 确保静态目录存在
+STATIC_DIR = Path(__file__).parent.parent / "static"
+STATIC_DIR.mkdir(parents=True, exist_ok=True)
+
+# 挂载静态文件目录
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 
 @app.get("/health")
@@ -50,6 +60,13 @@ async def get_dashboard_image():
         # 4. 生成灰度 PNG 截图
         png_bytes = await html_to_grayscale_png(html_content)
         
+        # 5. 保存到静态目录供调试
+        try:
+            with open(STATIC_DIR / "dashboard.png", "wb") as f:
+                f.write(png_bytes)
+        except Exception as e:
+            logger.error(f"Failed to save static dashboard image: {e}")
+            
         return Response(
             content=png_bytes,
             media_type="image/png",

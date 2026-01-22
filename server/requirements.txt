@@ -8,3 +8,4 @@ pillow>=10.2.0
 python-dotenv==1.0.0
 pyjwt[crypto]>=2.8.0
 cryptography>=42.0.0
+tzdata
