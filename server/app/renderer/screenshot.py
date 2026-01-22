@@ -42,11 +42,20 @@ async def html_to_grayscale_png(html_content: str) -> bytes:
         
         await browser.close()
     
-    # 转换为灰度图，移除透明通道
+    # 将截图转换为灰度图
     img = Image.open(BytesIO(screenshot_bytes))
     
     # 转换为灰度模式 (L = 8-bit grayscale)
     grayscale_img = img.convert("L")
+    
+    # 增强对比度 (让黑更黑，白更白，减少中间灰色)
+    from PIL import ImageEnhance
+    enhancer = ImageEnhance.Contrast(grayscale_img)
+    grayscale_img = enhancer.enhance(1.2)  # 提升 20% 对比度
+    
+    # 将 256 级灰度压缩至 16 级 (4-bit), 匹配 Kindle 硬件
+    # 映射公式：(x // 16) * 17 确保 0->0, 255->255，且只有 16 个阶梯
+    grayscale_img = grayscale_img.point(lambda x: (x // 16) * 17)
     
     # 保存到字节流
     output = BytesIO()
