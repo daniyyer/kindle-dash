@@ -13,8 +13,8 @@ QWEATHER_KEY_ID = os.getenv("QWEATHER_KEY_ID", "")
 QWEATHER_PRIVATE_KEY = os.getenv("QWEATHER_PRIVATE_KEY", "")
 
 # Location (longitude,latitude or city ID)
-LOCATION = "121.1462,31.4622"  # Default location (Taicang)
-LOCATION_NAME = "太仓"
+LOCATION = os.getenv("LOCATION", "121.1462,31.4622")  # Default location (Taicang)
+LOCATION_NAME = os.getenv("LOCATION_NAME", "太仓")
 
 # 新闻 RSS 配置
 NEWS_RSS_DOMESTIC = "https://www.chinanews.com.cn/rss/importnews.xml"
