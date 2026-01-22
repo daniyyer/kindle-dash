@@ -25,9 +25,20 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r server/requirements.txt
 
+      - name: Cache Playwright Browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('server/requirements.txt') }}
+
       - name: Install Playwright Browsers
-        run: |
-          playwright install chromium --with-deps
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: playwright install chromium --with-deps
+
+      - name: Install Playwright Dependencies (even on cache hit)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: playwright install-deps chromium
 
       - name: Render Dashboard
         env:
