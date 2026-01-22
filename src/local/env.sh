@@ -2,7 +2,7 @@
 
 # Export environment variables here
 export WIFI_TEST_IP=${WIFI_TEST_IP:-1.1.1.1}
-export REFRESH_SCHEDULE=${REFRESH_SCHEDULE:-"5 7-19 * * *"}
+export REFRESH_SCHEDULE=${REFRESH_SCHEDULE:-"5 7-24 * * *"}
 export TIMEZONE=${TIMEZONE:-"Asia/Shanghai"}
 
 # By default, partial screen updates are used to update the screen,

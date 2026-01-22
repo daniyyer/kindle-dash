@@ -57,6 +57,10 @@ async def html_to_grayscale_png(html_content: str) -> bytes:
     # 映射公式：(x // 16) * 17 确保 0->0, 255->255，且只有 16 个阶梯
     grayscale_img = grayscale_img.point(lambda x: (x // 16) * 17)
     
+    # 逆时针旋转 90 度，将 800x600 横屏图片转为 600x800 竖屏
+    # 这样 Kindle 竖放时可以正常显示横屏布局的内容
+    grayscale_img = grayscale_img.rotate(90, expand=True)
+    
     # 保存到字节流
     output = BytesIO()
     grayscale_img.save(output, format="PNG", optimize=True)
