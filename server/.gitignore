@@ -21,6 +21,7 @@ ENV/
 # 测试输出
 test*.png
 output*.png
+static/dashboard.png
 
 # 系统文件
 .DS_Store

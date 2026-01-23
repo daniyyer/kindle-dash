@@ -20,3 +20,4 @@ __pycache__/
 
 # System
 .DS_Store
+server/static/dashboard.png
