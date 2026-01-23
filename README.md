@@ -53,6 +53,26 @@ If you're using KUAL you can use simple extension to start this Dashboard
 
 * The releases contain a pre-compiled binary of the [ht](https://github.com/ducaale/ht) command-line HTTP client. This fully supports modern HTTPS crypto, wheras the built-in `curl` and `wget` commands don't (because they rely on a very old `openssl` library).
 
+## Live Demo
+
+- **Dashboard Preview**: [https://kindle-dash-server.onrender.com/preview](https://kindle-dash-server.onrender.com/preview)
+- **Dashboard Image**: [https://kindle-dash-server.onrender.com/dashboard](https://kindle-dash-server.onrender.com/dashboard)
+
+> Note: The server runs on Render free tier and may take 30-60s to wake up on first request.
+
+## Server
+
+The `server/` directory contains a FastAPI server that renders the dashboard. See [server/README.md](./server/README.md) for details.
+
+### Scheduled Updates with Trigger.dev
+
+The `trigger/` directory contains a [Trigger.dev](https://trigger.dev) project that refreshes the dashboard every 30 minutes. This keeps the Render server active and ensures the dashboard image is always up-to-date.
+
+Setup:
+1. `cd trigger && npm install`
+2. Copy `.env.example` to `.env` and add your `TRIGGER_SECRET_KEY`
+3. Deploy: `npx trigger.dev@latest deploy`
+
 ## Credits
 
 Thanks to [davidhampgonsalves/life-dashboard](https://github.com/davidhampgonsalves/life-dashboard) for the inspiration!
