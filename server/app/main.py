@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 from app.services.news import get_news_data
 from app.renderer.template import render_dashboard_html
 from app.renderer.screenshot import html_to_grayscale_png
+from app.services.r2_storage import upload_dashboard_image
 from app.config import LOCATION
 
 app = FastAPI(
@@ -40,7 +41,7 @@ async def health_check():
     return {"status": "ok"}
 
 
-@app.get("/dashboard.png")
+@app.get("/dashboard")
 async def get_dashboard_image():
     """
     生成仪表盘 PNG 图片
@@ -66,6 +67,9 @@ async def get_dashboard_image():
                 f.write(png_bytes)
         except Exception as e:
             logger.error(f"Failed to save static dashboard image: {e}")
+        
+        # 6. 上传到 Cloudflare R2 (如果配置了)
+        upload_dashboard_image(png_bytes)
             
         return Response(
             content=png_bytes,

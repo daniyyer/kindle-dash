@@ -9,7 +9,7 @@
                 "panel": "shared"
             },
             "windows": {
-                "command": "Get-NetTCPConnection -LocalPort 8000 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }; exit 0"
+                "command": "Get-NetTCPConnection -LocalPort 8000 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }; Start-Sleep -Seconds 2; exit 0"
             },
             "linux": {
                 "command": "lsof -t -i :8000 | xargs kill -9 2>/dev/null; exit 0"
