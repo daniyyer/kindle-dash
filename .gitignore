@@ -17,3 +17,6 @@ __pycache__/
 # Environment
 .env
 .env.local
+
+# System
+.DS_Store

@@ -40,7 +40,7 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: playwright install-deps chromium
 
-      - name: Render Dashboard
+      - name: Render and Upload to R2
         env:
           LOCATION: ${{ vars.LOCATION }}
           LOCATION_NAME: ${{ vars.LOCATION_NAME }}
@@ -48,14 +48,11 @@ jobs:
           QWEATHER_PROJECT_ID: ${{ secrets.QWEATHER_PROJECT_ID }}
           QWEATHER_KEY_ID: ${{ secrets.QWEATHER_KEY_ID }}
           QWEATHER_PRIVATE_KEY: ${{ secrets.QWEATHER_PRIVATE_KEY }}
+          # Cloudflare R2 Config
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
         run: |
           export PYTHONPATH=$PYTHONPATH:$(pwd)/server
           python server/render_cli.py
-
-      - name: Deploy to GitHub Pages Branch
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./output
-          publish_branch: gh-pages
-          force_orphan: true # 每次都覆盖，避免历史记录堆积

@@ -21,5 +21,5 @@ export SLEEP_SCREEN_INTERVAL=3600
 export LOW_BATTERY_REPORTING=${LOW_BATTERY_REPORTING:-false}
 export LOW_BATTERY_THRESHOLD_PERCENT=10
 
-# Dashboard Image URL (使用 jsDelivr CDN 加速，国内访问更稳定)
-export DASHBOARD_URL="http://192.168.50.94:8000/static/dashboard.png"
+# Dashboard Image URL (Cloudflare R2 Custom Domain)
+export DASHBOARD_URL="https://images.870327.xyz/dashboard.png"
